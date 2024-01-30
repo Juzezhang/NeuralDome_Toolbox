@@ -16,6 +16,7 @@ This repository has a toolbox to download, process and visualize the [`NeuralDom
 
 ## Note
 Jan. 05, 2024: We are currently in the process of uploading the whole dataset to Google Cloud Drive. Since the file size exceeds 5TB, it may take more than a few weeks to complete the upload.
+Jan. 30, 2024: Raw video data upload complete!
 
 ## Environment
 
