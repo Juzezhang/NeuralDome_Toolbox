@@ -19,6 +19,8 @@ Jan. 05, 2024: We are currently in the process of uploading the whole dataset to
 
 Jan. 30, 2024: Raw video data upload complete!
 
+Feb. 9, 2024: Mask upload complete!
+
 ## Environment
 
 ``` bash
