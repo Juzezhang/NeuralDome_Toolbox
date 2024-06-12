@@ -7,13 +7,15 @@ import cv2
 import numpy as np
 import torch
 import argparse
+import trimesh
 from tqdm import tqdm
 # Importing custom modules for 3D visualization and SMPL model handling
 from viz.pyt3d_wrapper import Pyt3DWrapper
-from psbody.mesh import Mesh
+# from psbody.mesh import Mesh
 from models.body_models_easymocap.smplx import SMPLHModel
 from yacs.config import CfgNode
 from utils.rotation_utils import rot6d_to_matrix
+import matplotlib.pyplot as plt
 
 # Set up the computation device based on CUDA availability
 if torch.cuda.is_available():
@@ -43,14 +45,15 @@ cfg_hand.num_pca_comps = 12
 body_model = SMPLHModel(model_path='models/model_files/smplhv1.2/neutral/model.npz',
                         device=device, mano_path='models/model_files/manov1.2',
                         cfg_hand=cfg_hand, NUM_SHAPES=16)
-human_mesh = Mesh(f=body_model.faces)
+# human_mesh = Mesh(f=body_model.faces)
 
 # Load object template
 object_name = args.seq_name.split('_')[-1]
 object_template_path = join(args.root_path, 'scaned_object', object_name, f'{object_name}_face1000.obj')
-object_mesh = Mesh()
-object_mesh.load_from_file(object_template_path)
-object_mesh_vertices = object_mesh.v
+# object_mesh = Mesh()
+# object_mesh.load_from_file(object_template_path)
+object_mesh = trimesh.load(object_template_path, process=False)
+object_mesh_vertices = object_mesh.vertices
 
 # Load calibration data
 with open(dataset_info_path, 'rb') as file:
@@ -109,7 +112,8 @@ for video_name in video_files:
         smpl_params = {key: np.array(value) if isinstance(value, list) else value for key, value in smpl_params.items()}
         # Update human mesh vertices
         out_mesh = body_model(**smpl_params)
-        human_mesh.v = out_mesh[0].cpu().numpy()
+        # human_mesh.v = out_mesh[0].cpu().numpy()
+        human_mesh = trimesh.Trimesh(vertices=out_mesh[0].cpu().numpy(), faces=body_model.faces)
 
         # Object transformation
         object_RT_path = join(mocap_path, 'object/refine/json', f'{str(frame_count).zfill(6)}.json')
@@ -120,7 +124,7 @@ for video_name in video_files:
         object_R_refinement = rot6d_to_matrix(object_R_refinement).numpy().reshape(3, 3).T
         object_T_refinement = np.array(object_rotation_refinement['object_T']).reshape(1, 3)
         # Apply transformation to the object mesh vertices
-        object_mesh.v = object_mesh_vertices.dot(object_R_refinement.T) + object_T_refinement
+        object_mesh.vertices = object_mesh_vertices.dot(object_R_refinement.T) + object_T_refinement
         # Initialize 3D visualization wrapper
         pyt3d_wrapper = Pyt3DWrapper(image_size=(720, 1280), K=K, R=R, T=T, image=img)
         # Render meshes

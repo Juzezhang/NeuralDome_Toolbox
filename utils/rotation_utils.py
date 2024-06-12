@@ -1,17 +1,17 @@
 import torch
-import imageio
-import torch.nn as nn
+# import imageio
+# import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
-import json
-from pytorch3d.io import load_obj , save_obj
-from pytorch3d.structures import Meshes
-from pytorch3d.renderer import (
-    PerspectiveCameras,
-    FoVPerspectiveCameras, look_at_view_transform, look_at_rotation,
-    RasterizationSettings, MeshRenderer, MeshRasterizer, BlendParams,
-    SoftSilhouetteShader, HardPhongShader, PointLights, TexturesVertex,
-)
+# import json
+# from pytorch3d.io import load_obj , save_obj
+# from pytorch3d.structures import Meshes
+# from pytorch3d.renderer import (
+#     PerspectiveCameras,
+#     FoVPerspectiveCameras, look_at_view_transform, look_at_rotation,
+#     RasterizationSettings, MeshRenderer, MeshRasterizer, BlendParams,
+#     SoftSilhouetteShader, HardPhongShader, PointLights, TexturesVertex,
+# )
 import numpy as np
 from pytorch3d.transforms import Rotate, Transform3d, Translate
 from pytorch3d.renderer.utils import TensorProperties, convert_to_tensors_and_broadcast

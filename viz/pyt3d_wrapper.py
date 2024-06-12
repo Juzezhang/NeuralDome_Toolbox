@@ -19,34 +19,29 @@ from pytorch3d.renderer import (
     FoVPerspectiveCameras,
     Materials
 )
+from pytorch3d.renderer import AmbientLights, DirectionalLights
+
 from pytorch3d.structures import Meshes, join_meshes_as_scene
+from pytorch3d.utils import cameras_from_opencv_projection
+
 from viz.contact_viz import ContactVisualizer
 
 SMPL_OBJ_COLOR_LIST = [
         [0.65098039, 0.74117647, 0.85882353],  # SMPL
-        [251 / 255.0, 128 / 255.0, 114 / 255.0],  # SMPL
-        [105/ 255.0, 161/ 255.0, 248/ 255.0],  # object
         [251 / 255.0, 128 / 255.0, 114 / 255.0],  # object
+        [255/ 255.0, 255/ 255.0, 0/ 255.0,],  # SMPL
+        [105/ 255.0, 161/ 255.0, 248/ 255.0],  # object
         [0.69098039, 0.94117647, 0.85882353],  # SMPL
         [255/ 255.0, 245/ 255.0, 225/ 255.0,],  # SMPL
-
+        [255 / 255.0, 215 / 255.0, 225 / 255.0, ],  # SMPL
+        [155 / 255.0, 215 / 255.0, 225 / 255.0, ],  # SMPL
+        [255 / 255.0, 215 / 255.0, 205 / 255.0, ],  # SMPL
+        [255 / 255.0, 15 / 255.0, 205 / 255.0, ],  # SMPL
+        [255 / 255.0, 35 / 255.0, 205 / 255.0, ],  # SMPL
+        [255 / 255.0, 15 / 255.0, 50 / 255.0, ],  # SMPL
+        [117 / 255.0, 15 / 201.0, 60 / 255.0, ],  # SMPL
+        [10 / 255.0, 15 / 201.0, 90 / 255.0, ],  # SMPL
 ]
-# SMPL_OBJ_COLOR_LIST = [
-#         [251 / 255.0, 128 / 255.0, 114 / 255.0],  # object
-#         # [0.69098039, 0.94117647, 0.85882353],  # SMPL
-#         [251 / 255.0, 128 / 255.0, 114 / 255.0],  # object
-#         [251 / 255.0, 128 / 255.0, 114 / 255.0],  # object
-#         [251 / 255.0, 128 / 255.0, 114 / 255.0],  # object
-#     ]
-
-
-# SMPL_OBJ_COLOR_LIST = [
-#         [105/ 255.0, 161/ 255.0, 248/ 255.0,],  # SMPL
-#         # [0.69098039, 0.94117647, 0.85882353],  # SMPL
-#         [252 / 255.0, 129 / 255.0, 169 / 255.0],  # object
-#         [251 / 255.0, 128 / 255.0, 114 / 255.0],  # object
-#     ]
-
 
 from pytorch3d.transforms import Rotate, Transform3d, Translate
 from pytorch3d.renderer.utils import TensorProperties, convert_to_tensors_and_broadcast
@@ -306,11 +301,6 @@ class OpenGLRealPerspectiveCameras(TensorProperties):
 
 
 
-
-
-
-
-
 class MeshRendererWrapper:
     "a simple wrapper for the pytorch3d mesh renderer"
     def __init__(self, image_size=1200,
@@ -323,8 +313,15 @@ class MeshRendererWrapper:
         self.max_faces_per_bin=max_faces_per_bin # prevent overflow, see https://github.com/facebookresearch/pytorch3d/issues/348
         self.blur_radius = blur_radius
         self.device = device
-        self.lights=lights if lights is not None else PointLights(
-            ((0.5, 0.5, 0.5),), ((0.5, 0.5, 0.5),), ((0.05, 0.05, 0.05),), ((0, -2, 0),), device
+        # self.lights=lights if lights is not None else PointLights(
+        #     ((0.5, 0.5, 0.5),), ((0.5, 0.5, 0.5),), ((0.05, 0.05, 0.05),), ((0, 10, 0),), device
+        # )
+        self.lights = lights if lights is not None else PointLights(
+            ambient_color=((0.7, 0.7, 0.7),),  # Reduce ambient light intensity
+            diffuse_color=((0.7, 0.7, 0.7),),  # Reduce diffuse light intensity
+            specular_color=((0.4, 0.4, 0.4),),  # Reduce specular light intensity
+            location=((0, 0, 5),),
+            device=self.device
         )
         # self.lights = np.array([1.0, 1.0, 1.0, 1.0])
         self.materials = materials
@@ -352,37 +349,12 @@ class MeshRendererWrapper:
             materials=self.materials,
             blend_params=blend_params)
 
-        # lights = PointLights(
-        #     device=self.device,
-        #     ambient_color=((1., 1., 1.),),
-        #     diffuse_color=((0.8, 0.8, 0.8),),
-        #     specular_color=((0.0, 0.0, 0.0),),
-        #     location=[[10.0, 0.0, 0.0]],
-        # )
-        # blendparam = BlendParams(1e-4, 1e-8, (1.0, 1.0, 1.0))
-        # materials = Materials(
-        #     device=self.device,
-        #     specular_color=[[0.0, 1.0, 0.0]],
-        #     shininess=10.0
-        # )
-        # shader = SoftPhongShader(
-        #     device=self.device,
-        #     lights=lights,
-        #     materials=materials,
-        #     blend_params=blendparam,
-        # )
-
         renderer = MeshRenderer(
             rasterizer=MeshRasterizer(
                 raster_settings=raster_settings),
                 shader=shader
         )
 
-        # renderer = MeshRenderer(
-        #     rasterizer=MeshRasterizer(
-        #         raster_settings=raster_settings),
-        #         shader=shader
-        # )
         return renderer
 
     def render(self, meshes, cameras, ret_mask=False):
@@ -408,36 +380,17 @@ class Pyt3DWrapper:
         # R[0, 0] = R[1, 1] = -1 # pytorch3d y-axis up, need to rotate to kinect coordinate
         R = torch.tensor(R, dtype=torch.float32).unsqueeze(0)
         T = torch.tensor(T, dtype=torch.float32).unsqueeze(0)
-        # fx, fy = 979.7844, 979.840  # focal length
-        # cx, cy = 1018.952, 779.486  # camera centers
-        # color_w, color_h = 2048, 1536  # kinect color image size
-        # cam_center = torch.tensor((K[0,0], K[1,1]), dtype=torch.float32).unsqueeze(0)
-        # focal_length = torch.tensor((K[0,2], K[1,0]), dtype=torch.float32).unsqueeze(0)
-
-        # focal_length = torch.tensor((K[0,0], K[1,1]), dtype=torch.float32).unsqueeze(0)
-        # cam_center = torch.tensor((K[0,2], K[1,2]), dtype=torch.float32).unsqueeze(0)
-
-        # focal_length = torch.tensor((K[0,0], K[1,1]), dtype=torch.float32).unsqueeze(0)
-        # cam_center = torch.tensor((K[0, 2], K[1, 2]), dtype=torch.float32).unsqueeze(0)
-        # focal_length = torch.tensor((K[1, 1], K[0, 0]), dtype=torch.float32).unsqueeze(0)
-        # cam_center = torch.tensor((K[1,2], K[0,2]), dtype=torch.float32).unsqueeze(0)
 
         pyt3d_version = pytorch3d.__version__
         if pyt3d_version >= '0.6.0':
-            cam = PerspectiveCameras(focal_length=focal_length, principal_point=cam_center,
-                                     image_size=((image_size[1], image_size[0]),),
-                                     device=device,
-                                     R=R, T=T, in_ndc=False)
+            imgSize = torch.tensor(np.array((image_size[0], image_size[1]))).to(device)
+            K = torch.tensor(K, dtype=torch.float32).unsqueeze(0).to(device)
+            R = R.to(device)
+            T = T.to(device)
+            cam = cameras_from_opencv_projection(R, T, K, imgSize.unsqueeze(0))
 
         else:
-            # cam = PerspectiveCameras(focal_length=focal_length, principal_point=cam_center,
-            #                          image_size=((3840, 2160),),
-            #                          device=device,
-            #                          R=R, T=T)
-            # cam = PerspectiveCameras(focal_length=focal_length, principal_point=cam_center,
-            #                          image_size=((image_size[1], image_size[0]),),
-            #                          device=device,
-            #                          R=R, T=T)
+
             cam = OpenGLRealPerspectiveCameras(
                 focal_length=((K[0, 0], K[1, 1]),),  # Nx2
                 principal_point=((K[0, 2], K[1, 2]),),  # Nx2
@@ -472,14 +425,37 @@ class Pyt3DWrapper:
         return rend
 
     def prepare_render(self, meshes, colors, R=None, T=None):
+        # py3d_meshes = []
+        # for mesh, color in zip(meshes, colors):
+        #     pyt3d_version = pytorch3d.__version__
+        #     if pyt3d_version >= '0.6.0':
+        #         vertex = mesh.v
+        #     else:
+        #         vertex = (np.dot(R, mesh.v.T) + T.reshape(3, 1)).T
+        #     vc = np.zeros_like(vertex)
+        #     vc[:, :] = color
+        #     text = TexturesVertex([torch.from_numpy(vc).float().to(self.device)])
+        #     py3d_mesh = Meshes([torch.from_numpy(vertex).float().to(self.device)], [torch.from_numpy(mesh.f.astype(int)).long().to(self.device)],
+        #                        text)
+        #     py3d_meshes.append(py3d_mesh)
+        # joined = join_meshes_as_scene(py3d_meshes)
         py3d_meshes = []
         for mesh, color in zip(meshes, colors):
-            vertex = (np.dot(R, mesh.v.T) + T.reshape(3, 1)).T
-            vc = np.zeros_like(vertex)
-            vc[:, :] = color
-            text = TexturesVertex([torch.from_numpy(vc).float().to(self.device)])
-            py3d_mesh = Meshes([torch.from_numpy(vertex).float().to(self.device)], [torch.from_numpy(mesh.f.astype(int)).long().to(self.device)],
-                               text)
+            if hasattr(mesh, 'v'):
+                vc = np.zeros_like(mesh.v)
+                vc[:, :] = color
+                text = TexturesVertex([torch.from_numpy(vc).float().to(self.device)])
+                py3d_mesh = Meshes([torch.from_numpy(mesh.v).float().to(self.device)],
+                                   [torch.from_numpy(mesh.f.astype(int)).long().to(self.device)],
+                                   text)
+            else:
+                # trimesh object
+                vc = np.zeros_like(mesh.vertices)
+                vc[:, :] = color
+                text = TexturesVertex([torch.from_numpy(vc).float().to(self.device)])
+                py3d_mesh = Meshes([torch.from_numpy(np.array(mesh.vertices)).float().to(self.device)],
+                                   [torch.from_numpy(np.array(mesh.faces).astype(int)).long().to(self.device)],
+                                   text)
             py3d_meshes.append(py3d_mesh)
         joined = join_meshes_as_scene(py3d_meshes)
         return joined

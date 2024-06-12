@@ -1,18 +1,28 @@
-# NeuralDome Dataset Toolbox
+# NeuralDome & HOIM3 Dataset Toolbox
 
-<div align="center">
-    <img src="assets/NeuralDome.png" alt="NeuralDome Logo">
-</div>
 
-Welcome to the repository for the NeuralDome Dataset Toolbox, which facilitates downloading, processing, and visualizing the NeuralDome Dataset. This toolbox supports our publication:
+Welcome to the repository for the Dataset Toolbox, which facilitates downloading, processing, and visualizing the Dataset. This toolbox supports our publication:
 
-**NeuralDome: A Neural Modeling Pipeline on Multi-View Human-Object Interactions**
 
-[[`Paper`](https://arxiv.org/pdf/2212.07626.pdf)]
-[[`Project Page`](https://juzezhang.github.io/NeuralDome/)]
-[[`Data`](https://drive.google.com/drive/folders/1-QHvcwa71Wk7rdfnQrOyInqK-SWK6lRA?usp=sharing)]
+
+|                                                                 <h2 align="center"> NeuralDome </h2>                                                                 |                                                                       <h2 align="center"> HOIM3 </h2>                                                                        |
+|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+|                                      NeuralDome: A Neural Modeling Pipeline on Multi-View Human-Object Interactions (CVPR2023)                                       |                                  HOI-M3: Capture Multiple Humans and Objects Interaction within Contextual Environment (CVPR2024 Highlight)                                  |
+|                                  We construct a 76-view dome to acquire a complex human object interaction dataset, named HODome,.                                   |                                    HOI-M3 is a large-scale dataset for modeling the interactions of multiple humans and multiple objects.                                    |
+| **[[Paper]](https://arxiv.org/pdf/2212.07626.pdf) [[Video]](https://www.youtube.com/watch?v=Nb82f5dm2GE) [[Project Page]](https://juzezhang.github.io/NeuralDome/)** | **[[Paper]](https://arxiv.org/pdf/2404.00299) [[Video]](https://www.youtube.com/watch?v=Fq6iqoXC99A&t=2s) [[Project Page]](https://juzezhang.github.io/HOIM3_ProjectPage/)** |
+|                             **[[Hodome Dataset]](https://drive.google.com/drive/folders/1-QHvcwa71Wk7rdfnQrOyInqK-SWK6lRA?usp=sharing)**                             |                                 **[[HOIM3 Dataset]](https://drive.google.com/drive/folders/1bT7J0XnbUx5goixgJRWJxpycOFffpwOc?usp=sharing)**                                  |
+|                                                    <img src="assets/NeuralDome.png" alt="drawing" height="150"/>                                                     |                                                           <img src="assets/HOIM3.jpg" alt="drawing" height="150"/>                                                           |
+
+
+
+
+
+
+
+
 
 ## Updates
+- **June 02, 2024**: Currently uploading the HOIM3 dataset to Google Cloud Drive.
 - **Jan. 05, 2024**: Currently uploading the entire dataset to Google Cloud Drive. Due to its size exceeding 5TB, this may take several weeks.
 - **Jan. 30, 2024**: Upload of raw video data is now complete!
 - **Feb. 9, 2024**: Upload of masks is now complete!
@@ -26,12 +36,9 @@ To get started, set up your environment as follows:
 conda create -n NeuralDome python=3.8 pytorch=1.11 cudatoolkit=11.3 torchvision -c pytorch -y
 conda activate NeuralDome
 
-# Install PyTorch3D-0.4.0
-git clone --branch v0.4.0 https://github.com/facebookresearch/pytorch3d.git 
-# Alternatively, download PyTorch3D v0.4.0 directly via this link:
-# https://github.com/facebookresearch/pytorch3d/archive/refs/tags/v0.4.0.zip
-cd pytorch3d
-python setup.py install
+## Install PyTorch3D
+conda install -c fvcore -c iopath -c conda-forge fvcore iopath
+pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
 
 # Install other requirements
 pip install -r requirements.txt
