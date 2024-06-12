@@ -126,4 +126,11 @@ If you find our toolbox or dataset useful for your research, please consider cit
       booktitle={CVPR},
       year={2023},
 }
+@inproceedings{
+      zhang2024hoi,
+      title={HOI-M3: Capture Multiple Humans and Objects Interaction within Contextual Environment},
+      author={Zhang, Juze and Zhang, Jingyan and Song, Zining and Shi, Zhanhe and Zhao, Chengfeng and Shi, Ye and Yu, Jingyi and Xu, Lan and Wang, Jingya},
+      booktitle={CVPR},
+      year={2024}
+}
 ```
