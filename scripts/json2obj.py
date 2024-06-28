@@ -12,7 +12,7 @@ from pytorch3d.io import load_obj, save_obj
 from pytorch3d.transforms import axis_angle_to_matrix, matrix_to_axis_angle
 from tqdm import tqdm
 
-from body_model.body_model import BodyModel
+from models.body_model.body_model import BodyModel
 
 
 def load_file(filename):
@@ -37,14 +37,14 @@ def rot6d_to_matrix(rot_6d):
 
 def process_hodome(obj_subjects, person_subjects, args, start):
     for i, subject in enumerate(tqdm(obj_subjects)):
-        batch_size = args.end
+        batch_size = args.btach_size
         # Prepare the body_model
-        body_model = BodyModel('/data/MPMO/body_model/smplh/neutral/model.npz',
+        body_model = BodyModel('./models/model_files/smplhv1.2/neutral/model.npz',
                                num_betas=16,
                                batch_size=batch_size,
                                num_expressions=None,
                                model_type='smplh').to(args.device)
-        body_model_one = BodyModel('/data/MPMO/body_model/smplh/neutral/model.npz',
+        body_model_one = BodyModel('./models/model_files/smplhv1.2/neutral/model.npz',
                                    num_betas=16,
                                    batch_size=1,
                                    num_expressions=None,
@@ -67,7 +67,6 @@ def process_hodome(obj_subjects, person_subjects, args, start):
             rot = axis_angle_to_matrix(torch.tensor(person_motion["Rh"][0]).reshape(1, -1))
             Th = torch.tensor(person_motion["Th"][0]).reshape(1, -1)
             Tnew = Th - j0 + torch.einsum('bij,bj->bi', rot, j0)
-
             # Human
             pose_body.append(np.array(person_motion["poses"][0]).reshape(1, -1)[:, :66])
             Rh.append(np.array(person_motion["Rh"][0]).reshape(1, -1))
@@ -110,13 +109,15 @@ def process_hodome(obj_subjects, person_subjects, args, start):
         body_pose_world = body_model(**{k: torch.tensor(v).float().to(args.device) for k, v in body_parms.items() if
                                         k in ['pose_body', 'root_orient', 'trans', 'betas', 'pose_hand']})
 
-        save_path = os.path.join(args.file_root, args.seq, 'vis/obj')
-        os.makedirs(save_path, exist_ok=True)
+        save_path_human = os.path.join(args.file_root, args.seq, 'obj/human')
+        os.makedirs(save_path_human, exist_ok=True)
+        save_path_object = os.path.join(args.file_root, args.seq, 'obj/object')
+        os.makedirs(save_path_object, exist_ok=True)
 
         for h in tqdm(range(batch_size)):
-            save_obj(join(save_path, "{:06d}.obj".format(h + start)), verts=verts_temp_all[h],
+            save_obj(join(save_path_object, "{:06d}.obj".format(h + start)), verts=verts_temp_all[h],
                      faces=faces_idx.verts_idx)
-            save_obj(join(save_path, "{:06d}_h.obj".format(h + start)), verts=body_pose_world.v[h],
+            save_obj(join(save_path_human, "{:06d}.obj".format(h + start)), verts=body_pose_world.v[h],
                      faces=body_pose_world.f)
 
 
@@ -136,7 +137,7 @@ if __name__ == "__main__":
     parser.add_argument('--file_root', type=str, default='/nas/nas_10/NeuralDome/Hodome/mocap/')
     parser.add_argument('--object_root', type=str, default='/nas/nas_10/NeuralDome/Hodome/scaned_object/')
     parser.add_argument('--seq', type=str, default='subject02_desk')
-    parser.add_argument('--end', type=int, default='5')
+    parser.add_argument('--btach_size', type=int, default='32')
     parser.add_argument('--device', type=str, default='cuda')
     args = parser.parse_args()
     main(args)

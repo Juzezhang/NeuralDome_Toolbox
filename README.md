@@ -21,13 +21,13 @@ Welcome to the repository for the Dataset Toolbox, which facilitates downloading
 
 
 
-## Updates
-- **June 02, 2024**: Currently uploading the HOIM3 dataset to Google Cloud Drive.
+## 🚀Updates
+- **June 12, 2024**: Currently uploading the HOIM3 dataset to Google Cloud Drive.
 - **Jan. 05, 2024**: Currently uploading the entire dataset to Google Cloud Drive. Due to its size exceeding 5TB, this may take several weeks.
 - **Jan. 30, 2024**: Upload of raw video data is now complete!
 - **Feb. 9, 2024**: Upload of masks is now complete!
 
-## Setting Up Your Environment
+## 📖Setting Up Your Environment
 
 To get started, set up your environment as follows:
 
@@ -101,6 +101,8 @@ python ./scripts/video2image.py
 
 ## Visualization Toolkit
 
+### Using Pytorch3D:
+
 Our `hodome_visualization.py` script showcases how to access the diverse annotations in our dataset. It uses the following command-line arguments:
 
 - `--root_path`: Directory containing the dataset.
@@ -114,7 +116,12 @@ Ensure your environment and data are properly set up before executing the script
 python ./scripts/hodome_visualization.py --root_path "/path/to/your/data" --seq_name "subject01_baseball" --resolution 720 --output_path "/path/to/your/output"
 ```
 
-## Citing Our Work
+### Using Blender:
+
+Please refer to [render.md](docs/render.md)
+
+
+## 🫶Citing Our Work
 
 If you find our toolbox or dataset useful for your research, please consider citing our paper:
 
