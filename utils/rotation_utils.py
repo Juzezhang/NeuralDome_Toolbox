@@ -119,10 +119,10 @@ def image_grid(images, rows=None, cols=None,
 
     for ax, im in zip(axarr.ravel(), images):
         if rgb:
-            # only render RGB channels
+            # only docs RGB channels
             ax.imshow(im[..., :3])
         else:
-            # only render Alpha channel
+            # only docs Alpha channel
             ax.imshow(im[...])
         if not show_axes:
             ax.set_axis_off()

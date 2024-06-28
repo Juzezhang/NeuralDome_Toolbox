@@ -404,7 +404,7 @@ class Pyt3DWrapper:
 
     def render_meshes(self, meshes, viz_contact=False, R=None, T=None):
         """
-        render a list of meshes
+        docs a list of meshes
         :param meshes: a list of psbody meshes
         :return: rendered image
         """
