@@ -21,7 +21,7 @@ Welcome to the repository for the Dataset Toolbox, which facilitates downloading
 
 
 
-## 🚀Updates
+## 🚩Updates
 - **June 30, 2024**: Important! All the object's rotations were mistakenly saved as the transpose of a rotation matrix.
 - **June 12, 2024**: Currently uploading the HOIM3 dataset to Google Cloud Drive.
 - **Jan. 05, 2024**: Currently uploading the entire dataset to Google Cloud Drive. Due to its size exceeding 5TB, this may take several weeks.
@@ -45,7 +45,7 @@ pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
 pip install -r requirements.txt
 ```
 
-## Preparing the Data
+## 🏃 Preparing the Data
 
 The complete dataset features 76-view RGB videos along with corresponding masks, mocap data, geometry, and scanned object templates. Download and extract the dataset from [this link](https://drive.google.com/drive/folders/1-QHvcwa71Wk7rdfnQrOyInqK-SWK6lRA):
 
@@ -100,7 +100,7 @@ Since the image files are extremely large, we have not uploaded them. Please run
 python ./scripts/video2image.py
 ```
 
-## Visualization Toolkit
+## 👀 Visualization Toolkit
 
 ### Using Pytorch3D:
 
@@ -122,7 +122,7 @@ python ./scripts/hodome_visualization.py --root_path "/path/to/your/data" --seq_
 Please refer to [render.md](docs/render.md)
 
 
-## 🫶Citing Our Work
+## 📖Citing Our Work
 
 If you find our toolbox or dataset useful for your research, please consider citing our paper:
 
