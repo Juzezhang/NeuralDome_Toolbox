@@ -22,6 +22,7 @@ Welcome to the repository for the Dataset Toolbox, which facilitates downloading
 
 
 ## 🚀Updates
+- **June 30, 2024**: Important! All the object's rotations were mistakenly saved as the transpose of a rotation matrix.
 - **June 12, 2024**: Currently uploading the HOIM3 dataset to Google Cloud Drive.
 - **Jan. 05, 2024**: Currently uploading the entire dataset to Google Cloud Drive. Due to its size exceeding 5TB, this may take several weeks.
 - **Jan. 30, 2024**: Upload of raw video data is now complete!
