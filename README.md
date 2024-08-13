@@ -19,8 +19,6 @@ Welcome to the repository for the Dataset Toolbox, which facilitates downloading
 
 
 
-
-
 ## 🚩Updates
 - **July 1, 2024**: [HOIM3] Due to the large size of the mask, we are currently only uploading the annotated mask for the 3rd view!!
 - **June 30, 2024**: Important! All the object's rotations were mistakenly saved as the transpose of a rotation matrix.
@@ -29,7 +27,7 @@ Welcome to the repository for the Dataset Toolbox, which facilitates downloading
 
 ## 📖Setup and download
 <details>
-<summary><b> Setting Up Your Environment<b></summary>
+<summary> Setting Up Your Environment </summary>
 
 To get started, set up your environment as follows:
 
@@ -48,7 +46,7 @@ pip install -r requirements.txt
 </details>
 
 <details>
-<summary><b> Preparing the Data<b></summary>
+<summary> Preparing the Data </summary>
 
 The complete dataset features 76-view RGB videos along with corresponding masks, mocap data, geometry, and scanned object templates. Download and extract the dataset from [this link](https://drive.google.com/drive/folders/1-QHvcwa71Wk7rdfnQrOyInqK-SWK6lRA):
 
@@ -112,7 +110,7 @@ python ./scripts/video2image.py
 ## 👀 Visualization Toolkit
 
 <details>
-<summary><b> Using Pytorch3D:<b></summary>
+<summary> Using Pytorch3D: </summary>
 
 Our `hodome_visualization.py` script showcases how to access the diverse annotations in our dataset. It uses the following command-line arguments:
 
@@ -132,7 +130,7 @@ python ./scripts/hoim3_visualization.py --root_path "/path/to/your/data" --seq_n
 </details>
 
 <details>
-<summary><b> Using Blender:<b></summary>
+<summary> Using Blender:</summary>
 
 
 Please refer to [render.md](docs/render.md)
