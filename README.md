@@ -27,8 +27,9 @@ Welcome to the repository for the Dataset Toolbox, which facilitates downloading
 - **June 12, 2024**: [HOIM3] Currently uploading the HOIM3 dataset to Google Cloud Drive.
 - **Jan. 05, 2024**: [Hodome] Upload of Hodome is now complete!
 
-
-## 📖Setting Up Your Environment
+## 📖Setup and download
+<details>
+<summary><b> Setting Up Your Environment<b></summary>
 
 To get started, set up your environment as follows:
 
@@ -44,8 +45,10 @@ pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
 # Install other requirements
 pip install -r requirements.txt
 ```
+</details>
 
-## 🏃 Preparing the Data
+<details>
+<summary><b> Preparing the Data<b></summary>
 
 The complete dataset features 76-view RGB videos along with corresponding masks, mocap data, geometry, and scanned object templates. Download and extract the dataset from [this link](https://drive.google.com/drive/folders/1-QHvcwa71Wk7rdfnQrOyInqK-SWK6lRA):
 
@@ -100,9 +103,16 @@ Since the image files are extremely large, we have not uploaded them. Please run
 python ./scripts/video2image.py
 ```
 
+</details>
+
+
+
+
+
 ## 👀 Visualization Toolkit
 
-### Using Pytorch3D:
+<details>
+<summary><b> Using Pytorch3D:<b></summary>
 
 Our `hodome_visualization.py` script showcases how to access the diverse annotations in our dataset. It uses the following command-line arguments:
 
@@ -119,13 +129,17 @@ python ./scripts/hodome_visualization.py --root_path "/path/to/your/data" --seq_
 ## HOI-M3
 python ./scripts/hoim3_visualization.py --root_path "/path/to/your/data" --seq_name "subject01_baseball" --resolution 720 --output_path "/path/to/your/output --vis_view 0"
 ```
+</details>
 
-### Using Blender:
+<details>
+<summary><b> Using Blender:<b></summary>
+
 
 Please refer to [render.md](docs/render.md)
 
+</details>
 
-## 📖Citing Our Work
+## 📖Citation
 
 If you find our toolbox or dataset useful for your research, please consider citing our paper:
 
