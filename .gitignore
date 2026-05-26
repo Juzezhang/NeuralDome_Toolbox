@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+
+# Outputs / scratch
+output/
+*.mp4
+*.avi
+
+# License-restricted body models — NOT redistributed.
+# Download them yourself via scripts/prepare_body_models.sh.
+models/model_files/*.pkl
+models/model_files/**/*.pkl
+models/model_files/**/*.npz
+models/model_files/**/MANO_*.pkl
+
+# Private / internal — not part of the public toolbox
+CLAUDE.md
+human_body_prior/
+foot_joints_methods/
+scripts/egonvs/

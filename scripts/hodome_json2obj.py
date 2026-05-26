@@ -1,131 +1,123 @@
+"""Export per-frame human + object meshes as OBJ files (for Blender, etc.).
+
+Replaces the legacy SMPL-H per-frame JSON loader with SMPL-X / MHR pose source.
+Object rotation/translation still read from mocap/{seq}/object/*.json.
+
+Outputs written to:
+  mocap/{seq}/obj/human/{frame:06d}.obj
+  mocap/{seq}/obj/object/{frame:06d}.obj
+"""
 import sys
 sys.path.append('./')
 import os
 from os.path import join
 import json
+import argparse
 import cv2
 import numpy as np
 import torch
-import argparse
 import trimesh
 from tqdm import tqdm
-from models.body_models_easymocap.smplx import SMPLHModel
-from yacs.config import CfgNode
+
 from utils.rotation_utils import rot6d_to_matrix
+from scripts.utils.pose_source import create_pose_source, add_pose_source_args
 
 
-# Set up the computation device based on CUDA availability
 def setup_device():
     if torch.cuda.is_available():
-        device = torch.device("cuda:0")
-        torch.cuda.set_device(device)
-    else:
-        device = torch.device("cpu")
-    return device
+        d = torch.device("cuda:0"); torch.cuda.set_device(d); return d
+    return torch.device("cpu")
 
 
-# Parse command line arguments
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='NeuralDome command line tools')
-    parser.add_argument('--root_path', type=str, default="/nas/nas_10/NeuralDome/Hodome")
-    parser.add_argument('--seq_name', type=str, default="subject02_desk")
-    return parser.parse_args()
+    p = argparse.ArgumentParser(description='Export HoDome SMPL-X/MHR + object meshes to OBJ.')
+    p.add_argument('--root_path', type=str, default="./HODome")
+    p.add_argument('--seq_name', type=str, default="subject02_desk")
+    p.add_argument('--start_frame', type=int, default=-1,
+                   help='Start frame index. -1 = use startframe.json rgb offset.')
+    p.add_argument('--end_frame', type=int, default=-1,
+                   help='End frame index (exclusive). -1 = video length.')
+    p.add_argument('--step', type=int, default=1)
+    p.add_argument('--object_required', action='store_true',
+                   help='Skip frames whose object/*.json is missing (default: skip silently)')
+    add_pose_source_args(p)
+    return p.parse_args()
 
 
-# Load configuration for SMPL model
-def load_smpl_model(device):
-    cfg_hand = CfgNode()
-    cfg_hand.use_pca = True
-    cfg_hand.use_flat_mean = False
-    cfg_hand.num_pca_comps = 12
-    body_model = SMPLHModel(model_path='models/model_files/smplhv1.2/neutral/model.npz',
-                            device=device, mano_path='models/model_files/manov1.2',
-                            cfg_hand=cfg_hand, NUM_SHAPES=16)
-    return body_model
-
-
-# Load object template
 def load_object_template(root_path, seq_name):
     object_name = seq_name.split('_')[-1]
-    object_template_path = join(root_path, 'scaned_object', object_name, f'{object_name}_face1000.obj')
-    object_mesh = trimesh.load(object_template_path, process=False)
-    object_mesh_vertices = object_mesh.vertices
-    return object_mesh, object_mesh_vertices
+    p = join(root_path, 'scaned_object', object_name, f'{object_name}_face1000.obj')
+    if not os.path.exists(p):
+        return None, None
+    m = trimesh.load(p, process=False)
+    return m, m.vertices.copy()
 
 
-# Load start frame information
-def load_start_frame_info(start_frame_path, seq_name):
-    with open(start_frame_path, 'rb') as file:
-        start_frames = json.load(file)
-    return start_frames['rgb'][seq_name]
-
-
-# Process frames and save human and object meshes
-def process_frames(start_frame, total_frames, mocap_path, save_path_human, save_path_object, body_model, object_mesh,
-                   object_mesh_vertices):
-    for frame_idx in tqdm(range(start_frame, total_frames), desc="Processing frames"):
-        smpl_param_path = join(mocap_path, 'smplh', f'{str(frame_idx).zfill(6)}.json')
-        with open(smpl_param_path, 'rb') as file:
-            smpl_params = json.load(file)['annots'][0]
-        smpl_params = {key: np.array(value) if isinstance(value, list) else value for key, value in smpl_params.items()}
-
-        # Generate human mesh from SMPL parameters
-        output_mesh = body_model(**smpl_params)
-        human_mesh = trimesh.Trimesh(vertices=output_mesh[0].cpu().numpy(), faces=body_model.faces)
-        human_mesh_file = join(save_path_human, f'{str(frame_idx).zfill(6)}.obj')
-        human_mesh.export(human_mesh_file)
-
-        # Load and apply object transformation
-        object_RT_path = join(mocap_path, 'object/refine/json', f'{str(frame_idx).zfill(6)}.json')
-        with open(object_RT_path, 'rb') as file:
-            object_transformation = json.load(file)
-        object_rotation = np.array(object_transformation['object_R'])
-        object_rotation = torch.from_numpy(object_rotation)
-        object_rotation = rot6d_to_matrix(object_rotation).numpy().reshape(3, 3).T
-        object_translation = np.array(object_transformation['object_T']).reshape(1, 3)
-
-        # Apply transformation to object mesh
-        object_mesh.vertices = object_mesh_vertices.dot(object_rotation.T) + object_translation
-        object_mesh_file = join(save_path_object, f'{str(frame_idx).zfill(6)}.obj')
-        object_mesh.export(object_mesh_file, include_texture=False)
+def load_start_frame(root_path, seq_name):
+    sfp = join(root_path, 'startframe.json')
+    if not os.path.exists(sfp):
+        return 0
+    with open(sfp, 'rb') as f:
+        d = json.load(f)
+    return d['rgb'].get(seq_name, 0)
 
 
 def main():
-    # Setup device
     device = setup_device()
-
-    # Parse arguments
     args = parse_arguments()
 
-    # Setup paths
-    dataset_info_path = join(args.root_path, 'dataset_information.json')
-    start_frame_path = join(args.root_path, 'startframe.json')
     mocap_path = join(args.root_path, 'mocap', args.seq_name)
-    save_path_human = join(mocap_path, 'obj/human')
-    os.makedirs(save_path_human, exist_ok=True)
-    save_path_object = join(mocap_path, 'obj/object')
-    os.makedirs(save_path_object, exist_ok=True)
+    save_human = join(mocap_path, 'obj', 'human')
+    save_object = join(mocap_path, 'obj', 'object')
+    os.makedirs(save_human, exist_ok=True)
+    os.makedirs(save_object, exist_ok=True)
 
-    # Load SMPL model
-    body_model = load_smpl_model(device)
+    print(f"[json2obj] pose source = {args.source}")
+    pose = create_pose_source(
+        args.source, args.seq_name,
+        smplx_npz_dir=args.smplx_npz_dir,
+        smplx_model_path=args.smplx_model_path,
+        mhr_verts_dir=args.mhr_verts_dir,
+        device='cuda' if torch.cuda.is_available() else 'cpu',
+    )
+    human_faces = pose.faces
 
-    # Load object template
     object_mesh, object_mesh_vertices = load_object_template(args.root_path, args.seq_name)
+    if object_mesh is None:
+        print(f"[json2obj] WARNING: object template missing; skipping object OBJ export")
 
-    # Load video files and start frame information
+    start_frame = args.start_frame if args.start_frame >= 0 else load_start_frame(args.root_path, args.seq_name)
+    # Determine end frame from video length
     videos_path = join(args.root_path, 'videos', args.seq_name)
-    video_files = sorted(os.listdir(videos_path))
-    start_frame = load_start_frame_info(start_frame_path, args.seq_name)
+    first_vid = sorted(os.listdir(videos_path))[0]
+    cap = cv2.VideoCapture(join(videos_path, first_vid))
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    cap.release()
+    end_frame = args.end_frame if args.end_frame > 0 else total
 
-    # Get total frames in the video
-    video_path = join(videos_path, video_files[0])
-    capture = cv2.VideoCapture(video_path)
-    total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-    capture.release()
+    for fid in tqdm(range(start_frame, end_frame, args.step), desc='frames'):
+        # Human mesh
+        try:
+            verts = pose.get_vertices(fid)
+        except IndexError:
+            continue  # pose source has no entry for this frame
+        trimesh.Trimesh(vertices=verts, faces=human_faces, process=False).export(
+            join(save_human, f'{fid:06d}.obj'))
 
-    # Process frames
-    process_frames(start_frame, total_frames, mocap_path, save_path_human, save_path_object, body_model, object_mesh,
-                   object_mesh_vertices)
+        # Object mesh
+        if object_mesh is not None:
+            obj_p = join(mocap_path, 'object', f'{fid:06d}.json')
+            if not os.path.exists(obj_p):
+                if args.object_required:
+                    raise FileNotFoundError(obj_p)
+                continue
+            with open(obj_p, 'rb') as f:
+                obj = json.load(f)
+            R6 = np.array(obj['object_R'])
+            Rm = rot6d_to_matrix(torch.from_numpy(R6)).numpy().reshape(3, 3).T
+            Tv = np.array(obj['object_T']).reshape(1, 3)
+            object_mesh.vertices = object_mesh_vertices.dot(Rm.T) + Tv
+            object_mesh.export(join(save_object, f'{fid:06d}.obj'), include_texture=False)
 
 
 if __name__ == "__main__":
