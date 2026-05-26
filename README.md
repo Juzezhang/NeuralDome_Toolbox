@@ -172,6 +172,18 @@ Please refer to [render.md](docs/render.md)
 
 </details>
 
+## 📊 Monocular HOI Benchmark
+
+We benchmark a representative set of **monocular human–object interaction** methods (PHOSA, CHORE,
+CONTHO, StackFLOW, HDM, Open4DHOI, VisTracker, CARI4D, InterTrack, …) on HODome's single-view
+**view-26** test set (subjects 01–02), each run with its **own released code** and scored by **one
+uniform judge protocol** (world→camera transform + BEHAVE-style surface-sampled Chamfer).
+
+- **Writeup (protocol, results table, fairness audit, reproducibility findings):**
+  [`docs/benchmark_monocular_hoi.md`](docs/benchmark_monocular_hoi.md)
+- **Metric-computation code:** [`benchmark/`](benchmark/) — the exact MPJPE / PA-MPJPE / Chamfer /
+  BEHAVE Human-/Object-CD implementation (CONTHO/CHORE Chamfer used verbatim).
+
 ## 📖Citation
 
 If you find our toolbox or dataset useful for your research, please consider citing our paper:
