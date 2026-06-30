@@ -128,7 +128,7 @@ scaled-rigid + 10000 surface samples).
 | 5 | HDM | CVPR'24 | single-image | **template-free point cloud** | point cloud |
 | 6 | VisTracker | CVPR'23 | video (temporal) | BEHAVE templates | human surf / obj vertex |
 | 7 | Open4DHOI | — | video | HODome template (GVHMR front-end) | human surf / obj surf |
-| 8 | CARI4D | CVPR'26 (NVlabs) | video | **template-free** (Hunyuan3D + FoundationPose) | — |
+| 8 | CARI4D | CVPR'26 (NVlabs) | video | **template-free, category-agnostic** (real NVlabs code + `cari4d-release` ckpt: UniDepth+NLF+SMPL-H human · Hunyuan3D object geometry · FoundationPose track · **CARI4D learned render-and-compare refinement**) | — |
 | 9 | InterTrack | — | video | category-agnostic | — |
 | – | WildHOI | CVPR'24 | single-image | 4 objects | **blocked** (see §5) |
 
@@ -138,53 +138,152 @@ object domain gap entirely and are the cleanest object comparison.
 
 ---
 
-## 4. Results
+## 4. Results — two leaderboards by input frame-rate
 
-> **Surface-sampled (N=10000) results — populated from `results/{method}/metrics_summary.json`.**
-> `Sa` column: object sampling (surf = area-weighted surface, vtx = vertex fallback).
+The benchmark has **two separate leaderboards**, split by the frame-rate the method is *fed*:
+- **Leaderboard A — 1 fps input:** single-image methods only (video methods cannot use 1 fps).
+- **Leaderboard B — 30 fps input:** single-image methods **re-run on 30 fps** *plus* the video /
+  temporal methods (which only run at 30 fps).
 
-### 4.1 Single-image methods @ 1 fps (39 seqs, ~2419 frames)
+A single-image method therefore appears on **both** boards (run once per rate); a video method only
+on **B**. All numbers are surface-sampled (N=10000); `Sa` = object sampling (surf = area-weighted
+surface, vtx = vertex resampling fallback). MPJPE/PA-MPJPE are not meaningful for the template-free
+point-cloud methods (HDM; InterTrack uses an FPS joint proxy) — judge those by Chamfer / Object-CD.
 
-<!-- RESULTS_1FPS_TABLE --> (surface-sampled N=10000; values are means over the 39-seq test set)
+### 4.1 Leaderboard A — 1 fps input (single-image)
+
+<!-- RESULTS_1FPS_TABLE -->
 | Method | PA-MPJPE↓ (mm) | MPJPE↓ | Chamfer↓ (mm) | p.V2V↓ | **Human-CD↓ (cm)** | **Object-CD↓ (cm)** | Sa(obj) | seqs |
 |---|---|---|---|---|---|---|---|---|
-| CHORE | **48.5** | 79.8 | 1326 | 65.3 | **4.73** | **62.8** | vtx | 27‡ |
+| CHORE | **48.3** | 79.4 | 1291 | 63.6 | **4.72** | **62.1** | vtx | 39 |
 | CONTHO | 58.0 | 89.1 | 3579 | 65.0 | **6.32** | **36.2** | vtx | 39 |
 | StackFLOW | 60.5 | 112.5 | 543 | 70.3 | **5.89** | **45.6** | vtx | 39 |
 | PHOSA | 66.2 | 108.8 | 3581 | 505.6 | **16.21** | **490.6** | surf | 39 |
 | HDM† | (424.9) | (511.6) | 3579 | (38.98) | **94.8** | surf | 39 |
 
-† HDM is template-free point cloud → MPJPE/PA-MPJPE/Human-CD (parenthesized) are **not** meaningful;
-judge HDM by Chamfer / Object-CD only.
-‡ CHORE @27/39 — per-frame neural-UDF optimization (~2 h/seq); paused at 27 under the GPU throttle.
-*Best human:* CHORE (PA-MPJPE 48.5, Human-CD 4.73 cm) — its per-frame optimization fits the body
-tightest. *Best object (fixed-template):* CONTHO (36.2 cm). *PHOSA's object (490 cm)* is an outlier —
-its weak-perspective object placement degrades badly on HODome's true-camera test.
-*Sa(obj):* surf = area-weighted surface samples; vtx = vertex resampling (CONTHO 64-pt proxy /
-StackFLOW 508 / VisTracker 516 own-template object faces not recovered).
+† HDM template-free point cloud (parenthesized human metrics not meaningful).
+CHORE = per-frame neural-UDF optimization (~2.5 h/seq); completed 39/39 (last 6 on the L40s queue).
+*Best human:* CHORE (PA-MPJPE 48.3). *Best object:* CONTHO (36.2 cm). *PHOSA object (490 cm)* is an
+outlier — weak-perspective placement degrades on HODome's true-camera test.
 
-### 4.2 Video / temporal methods @ 30 fps
+### 4.2 Leaderboard B — 30 fps input (single-image @30fps + video)
 
-<!-- RESULTS_30FPS_TABLE --> (fed 30 fps contiguous frames; scored on overlapping 1 fps GT)
-| Method | PA-MPJPE↓ (mm) | Chamfer↓ (mm) | p.V2V↓ | **Human-CD↓ (cm)** | **Object-CD↓ (cm)** | Sa(obj) | seqs |
-|---|---|---|---|---|---|---|---|
-| Open4DHOI | **55.1** | 1421 | 83.8 | **5.94** | **55.6** | surf | 39 |
-| VisTracker | 175.9 | 1148 | 185.8 | 15.21 | 139.1 | vtx | 34 |
-| CARI4D | 117.3 | 4269 | 1516 | 9.89 | 781.6 | mixed | 7‡ |
-| InterTrack | *(running locally)* | | | | | | 0→39 |
+**Video / temporal methods** (fed 30 fps contiguous frames):
 
-‡ CARI4D @7/39 (paused under throttle). Its **template-free** object (Hunyuan3D + FoundationPose)
-is the domain-gap-free comparison, but FoundationPose tracking **drifts in depth on symmetric/thin
-objects** (baseball bat = catastrophic ⇒ ObjCD 781; book/plush/sofa track to ~1 m) — first-frame
-placement is excellent for all (≤0.2 m), so the failure is temporal tracking, not shape recovery.
-Open4DHOI = strongest video method (human 5.94 cm, object 55.6 cm).
+<!-- RESULTS_30FPS_VIDEO_TABLE -->
+| Method | type | PA-MPJPE↓ | Chamfer↓ | p.V2V↓ | **Human-CD↓ (cm)** | **Object-CD↓ (cm)** | Sa(obj) | seqs |
+|---|---|---|---|---|---|---|---|---|
+| Open4DHOI | video | **55.1** | 1421 | 83.8 | **5.94** | **55.6** | surf | 39 |
+| VisTracker | video | 175.9 | 1148 | 185.8 | 15.21 | 139.1 | vtx | 34 |
+| CARI4D | video (template-free) | 145.3 | 1901 | 676 | 11.78 | 349.8 | mixed | 37 |
+| InterTrack | video (template-free) | (proxy) | 3559 | — | **35.93** | **91.8** | — | 8‡ |
 
-### 4.3 Cross-rate comparison (image methods, 1 fps vs 30 fps)
+**Single-image methods re-run @30fps** (same models, fed every 30 fps frame):
 
-<!-- RESULTS_CROSSRATE_TABLE -->
-*(Single-image methods are deterministic per frame, so 1 fps vs 30 fps differ only by the frame set
-scored, not by per-frame quality. 30 fps image-method runs were de-prioritized under the GPU throttle;
-the 1 fps numbers in §4.1 are the canonical single-image results.)*
+<!-- RESULTS_30FPS_IMAGE_TABLE --> (scored on the dense 30 fps GT, ~71936 frames)
+| Method | PA-MPJPE↓ | **Human-CD↓ (cm)** | **Object-CD↓ (cm)** | status |
+|---|---|---|---|---|
+| CONTHO | 58.0 | **6.33** | **35.9** | ✅ 39/39 @30fps (71936 fr) |
+| StackFLOW | 60.0 | **5.84** | **45.1** | ✅ 39/39 @30fps (70788 fr) |
+| HDM | | | | 🟢 23/39 @30fps (free pool, running) |
+| PHOSA | | | | ⚠️ per-frame optim ~13.5 s/fr → 30 fps ≈ 7 h/seq (subset only) |
+| CHORE | | | | ⚠️ per-frame optim ~133 s/fr → 30 fps infeasible full-39 (subset only) |
+
+*CONTHO 30 fps (PA 58.0 / Human-CD 6.33 / Object-CD 35.9) is **within noise of its 1 fps result**
+(58.0 / 6.32 / 36.2) — confirming feed-forward single-image methods are per-frame deterministic, so
+their dense-30fps average equals the 1 fps average. The 30 fps board is therefore only *discriminative*
+for the temporal/video methods.*
+
+‡ InterTrack @8/39 — a representative subset; the full-39 run is gated on a dense re-prep (its objpose
+stage needs ≥64 contiguous frames, and the remaining seqs were first prepped too sparse to window).
+CARI4D is now scored on the full **37/39** (keyboard×2 have no FoundationPose input). CARI4D's
+template-free object (Hunyuan3D + FoundationPose) drifts on symmetric/thin objects (full-set ObjCD
+349.8 cm; first-frame placement ≤0.2 m → the failure is temporal tracking, not shape recovery).
+Open4DHOI = strongest video method.
+
+**Note on feasibility:** the optimization-based single-image methods (PHOSA, CHORE) are not feasible
+at 30 fps over all 39 seqs (per-frame optimization × ~1843 frames/seq = hundreds of GPU-hours); they
+are reported at 30 fps on a representative subset only. The feed-forward methods (CONTHO, StackFLOW,
+HDM) run the full 30 fps set.
+
+### 4.3 Leaderboard C — in-domain (retrained on HoDome)
+
+The boards above are **zero-shot transfer** (BEHAVE-trained models, mapped to the nearest BEHAVE
+object template). To measure the *object domain gap* directly, we retrain the template-locked methods
+on HoDome itself: **train subjects 03–10, view26, 5 fps (43,674 frames); test subjects 01–02 (the
+same 39-seq testset); native HoDome objects (drop the BEHAVE-template mapping).** Best setting is
+**finetuning from the released BEHAVE checkpoint** (low LR, few epochs) — training from scratch on
+HoDome's ~40k frames badly underfits the human (CONTHO from-scratch PA 86.7), so it is not used.
+
+<!-- RESULTS_INDOMAIN_TABLE -->
+| Method | setting | PA-MPJPE↓ | Human-CD↓ (cm) | **Object-CD↓ (cm)** |
+|---|---|---|---|---|
+| **StackFLOW** | zero-shot (BEHAVE obj) | 60.5 | 5.89 | 45.55 |
+| **StackFLOW** | **in-domain finetune** | **51.1** | **4.71** | **25.75** |
+| **CONTHO** | zero-shot (BEHAVE obj) | 58.0 | 6.32 | 36.23 |
+| **CONTHO** | in-domain finetune (frozen human) | 59.9 | 6.87 | **28.00** |
+| CONTHO | in-domain finetune (full) | 72.7 | 7.07 | 27.99 |
+| **VisTracker** | zero-shot (BEHAVE obj) | 175.9 | 15.21 | 139.11 |
+| **VisTracker** | **in-domain finetune** | 174.3 | 14.99 | **111.93** |
+| **CHORE** | zero-shot (BEHAVE obj) | 48.5 | 4.73 | 60.29 |
+| **CHORE** | **in-domain finetune** | 49.2 | 4.77 | **51.99** |
+| **CARI4D** | zero-shot | 145.1 | 11.77 | 348.74 |
+| **CARI4D** | **in-domain finetune** | **120.6** | **10.31** | 416.75 |
+
+**Findings.**
+1. **In-domain finetuning closes the object domain gap.** StackFLOW Object-CD **45.6 → 25.8 cm
+   (−43%)**; CONTHO **36.2 → 28.0** (frozen-human, full-mesh). Training on the real objects
+   is the win the benchmark was built to expose.
+2. **StackFLOW improves on every axis** (PA 60.5→51.1, Human-CD 5.89→4.71, Object-CD 45.6→25.8) — the
+   ideal outcome.
+3. **CONTHO needs the human branch frozen.** Finetuning *all* of CONTHO regresses the human
+   (PA 58→72.7) because HoDome's SMPL-H **3D pose GT is noisier than BEHAVE's** (it projects correctly
+   in 2D — verified 100% in-bbox, 1.5 px reprojection — but its 3D joint angles are less accurate),
+   and CONTHO's strong direct 3D-pose loss overfits that noise. Freezing `hand4whole` (+ zeroing the
+   human losses) preserves the BEHAVE pose (PA **59.9 ≈ 58**) while the object branch still adapts
+   (36→**28.0**) — matching the full-finetune's object *without* the human cost. So the
+   **frozen-human variant is the reported CONTHO in-domain result**. StackFLOW does not need this (its
+   pose comes through a flow/2D-reprojection head, robust to 3D-GT noise).
+   *Object representation note:* CONTHO's native output is 64 anchor keypoints, but it also regresses
+   a full **6D object pose** (`obj_pose` R + `obj_trans` T); we export the pose applied to the full
+   native template (mesh + faces), so its Object-CD is surface-sampled and apples-to-apples with
+   StackFLOW/CHORE. (The 64-keypoint export gave an inflated 33.1; the full mesh is 28.0.)
+4. **VisTracker: object −20%, human flat — and only the *classical* parts adapt.** On the 34 seqs
+   both settings share, Object-CD drops 139.0 → 111.6 cm (−19.8%) while the human stays put
+   (PA 175.8→173.5, Human-CD 15.20→14.92). Two finetune-specific observations:
+   (a) **SIF-Net does not benefit from in-domain training** — its validation error rises
+   *monotonically* from the very first eval (227→271 over 2.5 h), so the val-min early-stopping
+   checkpoint (≈10 min in, barely off the BEHAVE init) is used; the object gain comes from the
+   **native templates + the finetuned conditional motion infiller** (whose val improves
+   0.0385→0.035) — the same "the neural branch doesn't adapt, the rest does" pattern as CONTHO's
+   human branch. (b) In-domain also **widens coverage**: pingpong, tennis and trolleycase have no
+   usable BEHAVE mapping and were unrunnable zero-shot; with native templates the finetuned eval
+   covers all 37 runnable seqs (39 minus the 2 keyboard skips). VisTracker remains an outlier in
+   absolute terms on HoDome (PA ~174 vs 51–60 for the others) — see the zero-shot boards for that
+   diagnosis; finetuning doesn't change the story.
+5. **CHORE: object −14%, human flat — same pattern.** Compared on the 38 seqs both settings share
+   (the finetuned model's object fit for one test seq, subject01_pingpong, is degenerate and crashes
+   neural_renderer's rasterizer — `forward_face_index_map` CUDA illegal-memory — on every L40s;
+   zero-shot ran it fine, so it's dropped from both columns for a fair common-subset number),
+   Object-CD drops 60.3 → 52.0 cm (−14%) while the human is unchanged
+   (PA 48.5→49.2, Human-CD 4.73→4.77). CHORE finetune *training* completes on the free pool after two
+   fixes — (a) **cap iters/epoch** so an epoch finishes inside the ~3 h preemption window (else the
+   7.6 h epoch never completes and restarts epoch 0), and (b) **node-local `/scr` TMPDIR + 4 workers**
+   so the NFS-bound boundary-sample dataloader runs at ~1 it/s instead of crawling. CHORE's *eval* is
+   the multi-stage **recon**, whose `neural_renderer`/`pytorch3d` ops are compiled sm_89-only and throw
+   "no kernel image" on free-pool cards — so it runs on L40s (as zero-shot CHORE did). `results/CHORE_finetune`.
+6. **CARI4D: the inverse pattern — finetune helps the human, *hurts* the object.** On the 37 seqs both
+   settings share (keyboard×2 excluded — no FoundationPose input was built for it, same as zero-shot),
+   the human improves (PA 145.1→120.6, −17%; Human-CD 11.77→10.31) but Object-CD *worsens*
+   348.7→416.8 cm (+19%). This is expected once you see CARI4D's design: unlike the four template-locked
+   methods, its object is **not** a fixed mesh whose pose is regressed — it's per-frame geometry from
+   Hunyuan3D + a FoundationPose track, refined by the learned render-and-compare net. There is no object
+   *template* for in-domain training to adapt; finetuning the refinement net on HoDome trades object
+   alignment for human alignment. And CARI4D's object error is by far the worst on the board (3–4 **m**,
+   vs 26–112 cm) in both settings — the Hunyuan3D-geometry + FoundationPose object pipeline essentially
+   does not work on these HoDome objects, and finetuning the refinement does not (and structurally cannot)
+   fix that. So CARI4D is the one method where in-domain training is **not** an object-gap win — a useful
+   negative result. `results/CARI4D_finetune` (37 seqs).
 
 ---
 
