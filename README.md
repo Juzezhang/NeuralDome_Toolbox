@@ -13,6 +13,11 @@ Welcome to the repository for the Dataset Toolbox, which facilitates downloading
 |                             **[[Hodome Dataset]](https://drive.google.com/drive/folders/19td-JTT38bduUAw384znXs_9dyS95q5e?usp=sharing)**                             |                                 **[[HOIM3 Dataset]](https://drive.google.com/drive/folders/1bT7J0XnbUx5goixgJRWJxpycOFffpwOc?usp=sharing)**                                  |
 |                                                    <img src="assets/NeuralDome.png" alt="drawing" height="130"/>                                                     |                                                           <img src="assets/HOIM3.jpg" alt="drawing" height="130"/>                                                           |
 
+> 📦 **HOI-M³ has a dedicated toolbox.** For HOI-M³ preprocessing (multi-view image extraction,
+> YOLO11-seg + cross-view ReID masks, mask reading/validity, MHR→SMPL-X conversion, and
+> visualization), use the separate **[HOI-M³ Toolbox](https://github.com/Juzezhang/HOIM3_Toolbox)**.
+> This repository covers the single-person, dome-captured **NeuralDome / HODome** dataset.
+
 
 
 
