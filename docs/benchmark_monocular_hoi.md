@@ -176,7 +176,7 @@ outlier — weak-perspective placement degrades on HODome's true-camera test.
 | Open4DHOI | video | **55.1** | 1421 | 83.8 | **5.94** | **55.6** | surf | 39 |
 | VisTracker | video | 175.9 | 1148 | 185.8 | 15.21 | 139.1 | vtx | 34 |
 | CARI4D | video (template-free) | 145.3 | 1901 | 676 | 11.78 | 349.8 | mixed | 37 |
-| InterTrack | video (template-free) | (proxy) | 3559 | — | **35.93** | **91.8** | — | 8‡ |
+| InterTrack | video (template-free) | (proxy) | 3559 | — | **37.65** | **104.64** | — | 39 |
 
 **Single-image methods re-run @30fps** (same models, fed every 30 fps frame):
 
@@ -194,8 +194,13 @@ outlier — weak-perspective placement degrades on HODome's true-camera test.
 their dense-30fps average equals the 1 fps average. The 30 fps board is therefore only *discriminative*
 for the temporal/video methods.*
 
-‡ InterTrack @8/39 — a representative subset; the full-39 run is gated on a dense re-prep (its objpose
-stage needs ≥64 contiguous frames, and the remaining seqs were first prepped too sparse to window).
+InterTrack is now **39/39** (was 8/39). Two upstream bugs blocked the rest and were fixed: (1) the
+opt stages' `randint(0, seq_len − batch_size)` crashed on short sequences (`high ≤ 0`) — guarded to
+use the whole clip; (2) the human-opt stage resumed from **stale checkpoints** (a 62-frame preview
+from an old prep) while the current prep uses full-length sequences, so the pose slice was empty and
+`smpl_layer` failed `size 256 vs 0` — the loader now validates checkpoint length against the current
+sequence and discards/rebuilds on mismatch. InterTrack remains a proxy (FPS joints, not a mesh), so
+PA-MPJPE/V2V are not directly comparable; judge it by Chamfer / Object-CD.
 CARI4D is now scored on the full **37/39** (keyboard×2 have no FoundationPose input). CARI4D's
 template-free object (Hunyuan3D + FoundationPose) drifts on symmetric/thin objects (full-set ObjCD
 349.8 cm; first-frame placement ≤0.2 m → the failure is temporal tracking, not shape recovery).
