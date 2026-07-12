@@ -174,7 +174,14 @@ outlier — weak-perspective placement degrades on HODome's true-camera test.
 | Method | type | PA-MPJPE↓ | Chamfer↓ | p.V2V↓ | **Human-CD↓ (cm)** | **Object-CD↓ (cm)** | Sa(obj) | seqs |
 |---|---|---|---|---|---|---|---|---|
 | Open4DHOI | video | **55.1** | 1421 | 83.8 | **5.94** | **55.6** | surf | 39 |
-| VisTracker | video | 175.9 | 1148 | 185.8 | 15.21 | 139.1 | vtx | 34 |
+| VisTracker | video | ~~175.9~~ | ~~1148~~ | ~~185.8~~ | ~~15.21~~ | ~~139.1~~ | vtx | 34 |
+
+> ⚠️ **VisTracker rows are INVALID — being re-run (2026-07-12 usage audit).** Our `prep_view26.py`
+> fed its SMPL-T front-end a hardcoded zero-pose `mocap.json` (the FrankMocap/PARE init was never
+> run) and near-empty 2D keypoints, so the temporal SMPL fit is degenerate (T-pose/floating/
+> mis-scaled — verified visually and by projection probes). The human metrics measure our broken
+> prep, not the method. The in-domain finetune eval reused the same stages 0–3, so its human
+> numbers are equally contaminated. Both will be re-run with a real 2D detector + real mono init.
 | CARI4D | video (template-free) | 145.3 | 1901 | 676 | 11.78 | 349.8 | mixed | 37 |
 | InterTrack | video (template-free) | (proxy) | 3559 | — | **37.65** | **104.64** | — | 39 |
 
@@ -228,8 +235,11 @@ HoDome's ~40k frames badly underfits the human (CONTHO from-scratch PA 86.7), so
 | **CONTHO** | zero-shot (BEHAVE obj) | 58.0 | 6.32 | 36.23 |
 | **CONTHO** | in-domain finetune (frozen human) | 59.9 | 6.87 | **28.00** |
 | CONTHO | in-domain finetune (full) | 72.7 | 7.07 | 27.99 |
-| **VisTracker** | zero-shot (BEHAVE obj) | 175.9 | 15.21 | 139.11 |
-| **VisTracker** | **in-domain finetune** | 174.3 | 14.99 | **111.93** |
+| **VisTracker** | zero-shot (BEHAVE obj) | ~~175.9~~ | ~~15.21~~ | ~~139.11~~ |
+| **VisTracker** | **in-domain finetune** | ~~174.3~~ | ~~14.99~~ | ~~111.93~~ |
+
+> ⚠️ VisTracker rows invalid — prep bug (zero-pose mocap init + empty 2D), being re-run; see the
+> Leaderboard-B note.
 | **CHORE** | zero-shot (BEHAVE obj) | 48.5 | 4.73 | 60.29 |
 | **CHORE** | **in-domain finetune** | 49.2 | 4.77 | **51.99** |
 | **CARI4D** | zero-shot | 145.1 | 11.77 | 348.74 |
